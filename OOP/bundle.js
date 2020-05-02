@@ -9,29 +9,21 @@ const Stuffing = require('./src/javascript/class_hamburger.js').Stuffing;
 const Salad = require('./src/javascript/class_salad.js').Salad;
 const Drink = require('./src/javascript/class_drink.js').Drink;
 
-// <option> html elements from <select>
-const OPTIONS = $('#select option').toArray();
 
-// Forms for adding a certain food
-const FOODS = $('.food').toArray();
+// Not sure if 'forEach' method is ES6, but I wrote my polyfill
+Object.defineProperty(Array.prototype, 'myForEach', {
 
-// Aside section of the page to chose desirable position and it's parameters
-const ASIDE = $('aside');
+  value: function(callback){
 
-// Setting options to show corresponding foods forms
-OPTIONS.forEach(function(element){
- 
-  $(element).click(function(){
+    for(let i = 0; i < this.length; i++){
 
-    // All forms are hidden
-    FOODS.forEach(function(element){
-      $(element).addClass('hidden');
-    })
+      // Invoking callback with apparent context
+      callback.call(this, this[i], i);
+    }
 
-    // Except for the needed one
-    ASIDE.find('.'+$(element).val()).removeClass('hidden');
+  },
 
-  })
+  enumerable: false,
 });
 
 
@@ -44,6 +36,50 @@ Object.defineProperty(String.prototype, 'myCapitalize', {
 
   enumerable: false,
 });
+
+const SELECT = $('#select');
+
+// <option> html elements from <select>
+const OPTIONS = $('#select option').toArray();
+
+// Forms for adding a certain food
+const FOODS = $('.food').toArray();
+
+// Aside section of the page to chose desirable position and it's parameters
+const ASIDE = $('aside');
+
+SELECT.change( function(){
+
+  //All forms are hidden
+  FOODS.myForEach(function(element){
+
+    $(element).addClass('hidden');
+
+  })
+
+  // Except for the needed one
+  ASIDE.find('.'+SELECT.find(':selected').val()).removeClass('hidden');
+
+});
+
+// Setting options to show corresponding foods forms
+// NOTE: This event listener DOES NOT WORK ON MOBILE VERSION
+// OPTIONS.myForEach(function(element){
+ 
+//   $(element).click(function(){
+
+//     // All forms are hidden
+//     FOODS.myForEach(function(element){
+
+//       $(element).addClass('hidden');
+
+//     })
+
+//     // Except for the needed one
+//     ASIDE.find('.'+$(element).val()).removeClass('hidden');
+
+//   })
+// });
 
 
 // Hamburger adding form submition
@@ -495,9 +531,9 @@ module.exports.ORDER = {
   positionTemplate: _.template($('#position_template').html()),
 
 
-  // Overriding (defining) forEach for ORDER LO
-  forEach(callback) {
-    this.collection.forEach(callback);
+  // Overriding (defining) myForEach for ORDER LO
+  myForEach(callback) {
+    this.collection.myForEach(callback);
   },
 
   // Pushes item to the collection and re-renders 
@@ -527,11 +563,13 @@ module.exports.ORDER = {
   },
 
   // Initializes position adding form
+  // NOTE: Maybe it's better to incapsulate this method as function into 'render' method
   inputInit(form, input, text){
     form.find(input).val(text);
     form.find(input).siblings('label').text(text.myCapitalize());
   },
 
+  // Main method that initializes food adding forms, and render dynamic elements (positions) into page
   render() { 
     
 
@@ -565,7 +603,8 @@ module.exports.ORDER = {
     $('#positions').empty();
 
     // Rendering position html elements where they belong
-    this.collection.forEach(function(element, index){
+    this.collection.myForEach(function(element, index){
+
       $(positionTemplate({
 
         // ID of the each position is 'position_<corresponding_item_index_in_collection>' 
@@ -594,7 +633,7 @@ module.exports.ORDER = {
 
     // Clear button delets all positions from the order
     $('#clear').click(function(){
-      absoluteThis.forEach(function(element){
+      absoluteThis.myForEach(function(element){
         absoluteThis.delete(element);
       })
     })
